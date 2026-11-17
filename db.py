@@ -50,8 +50,10 @@ engine =  create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
-       """Parent class: every database model inherits from this."""
-       async def get_db():
-         """Give each request its own database session, then close it."""  
-         async with AsyncSessionLocal() as session:
-            yield session
+    """Parent class: every database model inherits from this."""
+
+
+async def get_db():
+    """Give each request its own database session, then close it."""
+    async with AsyncSessionLocal() as session:
+        yield session
