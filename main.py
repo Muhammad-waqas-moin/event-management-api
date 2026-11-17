@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import models  
 import services
 from db import Base, engine,get_db
-from schemas import EventCreate, EventResponse, EventUpdate
+from schemas import EventCreate, EventResponse, EventUpdate, RegistrationCreate,RegistrationResponse
 
 
 @asynccontextmanager
@@ -91,4 +91,50 @@ async def delete_event(event_id: int, db: AsyncSession = Depends(get_db)):
     deleted = await services.delete_event(db, event_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Event not found")
-   
+
+@app.post(
+    "/events/{event_id}/registrations",
+    response_model=RegistrationResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Registrations"],
+    summary="Register for an event",
+)
+async def register_for_event(
+    event_id: int, data: RegistrationCreate, db: AsyncSession = Depends(get_db)
+):
+    """Register an employee. Returns 404 if the event is missing, 409 if duplicate or full."""
+    try:
+        return await services.register_for_event(db, event_id, data)
+    except services.EventNotFoundError:
+        raise HTTPException(status_code=404, detail="Event not found")
+    except services.DuplicateRegistrationError:
+        raise HTTPException(status_code=409, detail="Employee is already registered for this event")
+    except services.EventFullError:
+        raise HTTPException(status_code=409, detail="Event has reached its maximum capacity")
+
+
+@app.get(
+    "/events/{event_id}/registrations",
+    response_model=list[RegistrationResponse],
+    tags=["Registrations"],
+    summary="View all registrations for an event",
+)
+async def list_registrations(event_id: int, db: AsyncSession = Depends(get_db)):
+    """Return all registrations of an event, or 404 if the event does not exist."""
+    try:
+        return await services.get_registrations(db, event_id)
+    except services.EventNotFoundError:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+
+@app.delete(
+    "/registrations/{registration_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Registrations"],
+    summary="Cancel a registration",
+)
+async def cancel_registration(registration_id: int, db: AsyncSession = Depends(get_db)):
+    """Cancel a registration, or return 404 if it does not exist."""
+    cancelled = await services.cancel_registration(db, registration_id)
+    if not cancelled:
+        raise HTTPException(status_code=404, detail="Registration not found")
