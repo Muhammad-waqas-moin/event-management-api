@@ -59,3 +59,5 @@ class RegistrationResponse(BaseModel):
     employee_email: str
     registered_at: datetime
     model_config = ConfigDict(from_attributes=True)    
+
+   

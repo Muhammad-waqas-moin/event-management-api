@@ -104,7 +104,7 @@ async def register_for_event(
 ):
     """Register an employee. Returns 404 if the event is missing, 409 if duplicate or full."""
     try:
-        return await services.register_for_event(db, event_id, data)
+        return await services.register_event(db, event_id, data)
     except services.EventNotFoundError:
         raise HTTPException(status_code=404, detail="Event not found")
     except services.DuplicateRegistrationError:
