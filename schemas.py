@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator,EmailStr
 
 class EventBase(BaseModel):
     title: str = Field(... ,min_length=1, max_length=200, examples =["Pyhton Workshop"])
@@ -29,4 +29,33 @@ class EventResponse(EventBase):
     """What the API sends back to the client."""
 
     id: int
+    model_config = ConfigDict(from_attributes=True)    
+
+
+class RegistrationCreate(BaseModel):
+    """Request body for POST /events/{id}/registrations."""
+    employee_name: str = Field(..., min_length=1, max_length=150, examples=["waqas Khan"])
+    employee_email: EmailStr = Field(..., examples=["waqas.khan@acme.com"])  
+    @field_validator("employee_name")
+    @classmethod
+    def name_must_be_not_blank(cls, value:str)->str:
+        """Reject names that contain only spaces."""
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be empty")
+        return value 
+    @field_validator("employee_email")
+    @classmethod
+    def lowercase_email(cls, value: str) -> str:
+        """Store emails in lowercase so Ali@acme.com and ali@acme.com count as the same person."""
+        return value.lower()
+
+class RegistrationResponse(BaseModel):
+    """What the API sends back for a registration."""
+
+    id: int
+    event_id: int
+    employee_name: str
+    employee_email: str
+    registered_at: datetime
     model_config = ConfigDict(from_attributes=True)    
