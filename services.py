@@ -1,8 +1,9 @@
-from sqlalchemy import select, func  # database se data mangwane k tool (sql k salect)
+from sqlalchemy import  Date, cast,select, func  # database se data mangwane k tool (sql k salect)
 from models import Event,  Registration # hamari table wali class
 from sqlalchemy.ext.asyncio import AsyncSession 
 from schemas import EventUpdate , EventCreate, RegistrationCreate, RegistrationResponse # hamari schema wali class
 from sqlalchemy.exc import IntegrityError
+from datetime import date
 
 async def create_event(db: AsyncSession, data: EventCreate) -> Event:
     """Create and save a new event."""
@@ -13,9 +14,19 @@ async def create_event(db: AsyncSession, data: EventCreate) -> Event:
     return event
 
 
-async def get_events(db: AsyncSession) -> list[Event]:
-    """Return all events ordered by date."""
-    result = await db.execute(select(Event).order_by(Event.event_date))
+async def get_events(db: AsyncSession, skip:int =0, limit:int = 10,
+                      title:str|None= None,on_date: date | None = None,) -> list[Event]:
+    """Return events with optional title/date filters and pagination."""
+    # result = await db.execute(select(Event).order_by(Event.event_date))
+    # return list(result.scalars().all())
+
+    query  = select(Event).order_by(Event.event_date, Event.id)
+    if title:
+        query = query.where(Event.title.ilike(f"%{title}%"))
+    if on_date:
+        query = query.where(cast(Event.event_date, Date) == on_date)
+
+    result = await db.execute(query.offset(skip).limit(limit))
     return list(result.scalars().all())
 
 # select(Event): “Event table se sab rows do”
