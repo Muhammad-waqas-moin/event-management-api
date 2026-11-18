@@ -7,8 +7,9 @@
 #     return {"message": "Hello Event API World"}
 
 from contextlib import asynccontextmanager
-
-from fastapi import Depends, FastAPI, HTTPException, status
+from datetime import date
+# from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import models  
 import services
@@ -48,9 +49,18 @@ async def create_event(data: EventCreate, db: AsyncSession = Depends(get_db)):
     tags=["Events"],
     summary="Retrieve all events",
 )
-async def list_events(db: AsyncSession = Depends(get_db)):
-    """Return all events."""
-    return await services.get_events(db)
+async def list_events(
+    skip: int = Query(0, ge=0, description="Number of events to skip"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of events to return"),
+    title: str | None = Query(None, description="Search events by title (case-insensitive)"),
+    event_date: date | None = Query(None, alias="date", description="Filter by date (YYYY-MM-DD)"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return events, with optional pagination and filtering by title and date."""
+    return await services.get_events(db, skip=skip, limit=limit, title=title, on_date=event_date)
+# async def list_events(db: AsyncSession = Depends(get_db)):
+#     """Return all events."""
+#     return await services.get_events(db)
 
 
 @app.get(
