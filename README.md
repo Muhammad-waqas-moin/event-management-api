@@ -10,6 +10,8 @@ A REST API for Acme Corp's internal event system, built with **FastAPI**, **Post
 - Pydantic validation and proper HTTP status codes (200, 201, 204, 404, 409, 422)
 - Fully asynchronous database access
 - Auto-generated API docs (Swagger UI)
+- Pagination on the events list (`skip` and `limit`)
+- Search and filtering by title and date
 
 ## Tech Stack
 
@@ -89,6 +91,9 @@ Open the interactive API documentation at: http://127.0.0.1:8000/docs
 | GET    | `/events/{id}` | Retrieve a specific event |
 | PUT    | `/events/{id}` | Update an event           |
 | DELETE | `/events/{id}` | Delete an event           |
+
+`GET /events` query parameters: `skip` (default 0), `limit` (default 10, max 100), `title` (case-insensitive search), `date` (YYYY-MM-DD).
+Example: `GET /events?title=python&date=2026-11-20&skip=0&limit=10`
 
 ### Registrations
 
